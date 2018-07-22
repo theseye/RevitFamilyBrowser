@@ -84,8 +84,6 @@ namespace RevitFamilyBrowser.WPF_Classes
                 Uri RevitLogo = new Uri(new DirectoryInfo(System.IO.Path.GetTempPath() +
                     "FamilyBrowser\\RevitLogo.bmp").ToString());
 
-                List<string> error = new List<string>();
-
                 foreach (var item in listData)
                 {
                     var array = item.Split('#');
@@ -104,8 +102,6 @@ namespace RevitFamilyBrowser.WPF_Classes
                             {
                                 FamilyData.img = new Uri(imageName);
 
-                                error.Add(FamilyData.Name + "---" + FamilyData.FamilyName + "---" + FamilyData.img + "\n");
-
                                 break;
                             }
                             else
@@ -117,8 +113,6 @@ namespace RevitFamilyBrowser.WPF_Classes
                         collectionData.Add(FamilyData);
                     }
                 }
-
-                File.WriteAllLines(@"C:\Users\Administrator\Desktop\error.txt", error.ToList());
 
                 collectionData = new ObservableCollection<FamilyData>(collectionData.Reverse());
 
