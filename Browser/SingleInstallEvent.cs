@@ -11,7 +11,9 @@ namespace RevitFamilyBrowser.Revit_Classes
         public void Execute(UIApplication uiapp)
         {
             UIDocument uidoc = uiapp.ActiveUIDocument;
+
             Autodesk.Revit.ApplicationServices.Application app = uiapp.Application;
+
             Document doc = uidoc.Document;
 
             string FamilyPath = Properties.Settings.Default.FamilyPath;
@@ -39,12 +41,9 @@ namespace RevitFamilyBrowser.Revit_Classes
                 }
                 uidoc.PostRequestForElementTypePlacement(historySymbol);
             }
-
             else
             {
-                FilteredElementCollector collector = new FilteredElementCollector(doc).
-                    OfCategory(BuiltInCategory.OST_ElectricalFixtures).
-                    OfClass(typeof(Family));
+                FilteredElementCollector collector = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_ElectricalFixtures).OfClass(typeof(Family));
 
                 FamilySymbol symbol = collector.FirstElement() as FamilySymbol;
 
@@ -92,8 +91,8 @@ namespace RevitFamilyBrowser.Revit_Classes
 
                 string targetName = FamilyName.Substring(0, FamilyName.Length - 4);
 
-                return new FilteredElementCollector(doc).OfClass(targetType)
-                        .FirstOrDefault(e => e.Name.Equals(targetName));
+                return new FilteredElementCollector(doc).OfClass(targetType).
+                    FirstOrDefault(e => e.Name.Equals(targetName));
             }
 
             TaskDialog.Show("FamilyPath Error", "Directory can't be found ");

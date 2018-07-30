@@ -30,6 +30,8 @@ namespace RevitFamilyBrowser.WPF_Classes
         private string tempFamilySymbol = string.Empty;
         private string tempFamilyName = string.Empty;
 
+        System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+
         public DockPanel(ExternalEvent exEvent, SingleInstallEvent handler)
         {
             InitializeComponent();
@@ -38,7 +40,6 @@ namespace RevitFamilyBrowser.WPF_Classes
 
             m_Handler = handler;
 
-            System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
             dispatcherTimer.Tick += new EventHandler(dispatcherTimer_Tick);
 
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 1);
@@ -46,6 +47,40 @@ namespace RevitFamilyBrowser.WPF_Classes
             dispatcherTimer.Start();
 
             CreateEmptyFamilyImage();
+        }
+
+        public void Check_Rfa()
+        {
+            bool IsExist = false;
+
+            if (Properties.Settings.Default.RootFolder == "")
+            {
+                //do nothing
+            }
+            else
+            {
+                foreach (var item in Directory.GetFiles(Properties.Settings.Default.RootFolder))
+                {
+                    foreach (var FamilyName in FolderSelect.FamilyName)
+                    {
+                        if (item.Contains(FamilyName))
+                        {
+                            IsExist = true;
+                        }
+                    }
+                }
+
+                if (IsExist)
+                {
+                    //do nothing
+                }
+                else
+                {
+                    Tools.ShowMessageBox("文件夹发生变化，请重新导入");
+
+                    dispatcherTimer.Stop();
+                }
+            }
         }
 
         private void dispatcherTimer_Tick(object sender, EventArgs e)
@@ -126,29 +161,6 @@ namespace RevitFamilyBrowser.WPF_Classes
 
         public void GenerateGrid()
         {
-            if (Properties.Settings.Default.RootFolder == "")
-            {
-                //do nothing
-            }
-            else
-            {
-                foreach (var item in Directory.GetFiles(Properties.Settings.Default.RootFolder))
-                {
-                    foreach (var FamilyName in FolderSelect.FamilyName)
-                    {
-                        if (item.Contains(FamilyName))
-                        {
-
-                        }
-                        else
-                        {
-                                
-                        }
-                    }
-
-                }
-            }
-
             string[] ImageList = Directory.GetFiles(System.IO.Path.GetTempPath() + "FamilyBrowser\\");
 
             if (temp != Properties.Settings.Default.SymbolList)
@@ -203,8 +215,11 @@ namespace RevitFamilyBrowser.WPF_Classes
         private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.Items.Count <= 0) return;
+
             var instance = dataGrid.SelectedItem as FamilyData;
+
             SetProperty(instance);
+
             m_ExEvent.Raise();
         }
 
@@ -215,10 +230,6 @@ namespace RevitFamilyBrowser.WPF_Classes
             var instance = dataGridHistory.SelectedItem as FamilyData;
 
             SetHistoryProperty(instance);
-
-            //Properties.Settings.Default.FamilyPath = string.Empty;
-            //Properties.Settings.Default.FamilySymbol = instance.Name;
-            //Properties.Settings.Default.FamilyName = instance.FamilyName;
 
             m_ExEvent.Raise();
         }
@@ -324,7 +335,6 @@ namespace RevitFamilyBrowser.WPF_Classes
             Properties.Settings.Default.FamilySymbol = instance.Name;
             Properties.Settings.Default.FamilyName = instance.FamilyName;
         }
-
 
         private void CreateEmptyFamilyImage()
         {

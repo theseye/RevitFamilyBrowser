@@ -1,18 +1,12 @@
 ﻿using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.Attributes;
 using System.IO;
-using RevitFamilyBrowser.WPF_Classes;
 using System.Windows.Media.Imaging;
-using System.Windows;
 using System.Drawing;
-using Autodesk.Revit.DB.Events;
-using System.Diagnostics;
 using Ookii.Dialogs.Wpf;
-using TaskDialog = Autodesk.Revit.UI.TaskDialog;
 
 namespace RevitFamilyBrowser.Revit_Classes
 {
@@ -25,13 +19,14 @@ namespace RevitFamilyBrowser.Revit_Classes
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-            Autodesk.Revit.ApplicationServices.Application app = uiapp.Application;
+            UIDocument uidoc = commandData.Application.ActiveUIDocument;
+
+            Autodesk.Revit.ApplicationServices.Application app = commandData.Application.Application;
+
             Document doc = uidoc.Document;
 
-            //TODO hotfix
             Ookii.Dialogs.Wpf.VistaFolderBrowserDialog fbd = new VistaFolderBrowserDialog();
+
             if (File.Exists(Properties.Settings.Default.DefaultSettingsPath))
             {
                 if (Properties.Settings.Default.RootFolder == File.ReadAllText(Properties.Settings.Default.SettingPath))
@@ -55,12 +50,11 @@ namespace RevitFamilyBrowser.Revit_Classes
                 }
             }
 
-
             if (fbd.ShowDialog() == true)
             {
                 if (fbd.SelectedPath.Contains("ROCHE") && app.VersionNumber != "2015")
                 {
-                    TaskDialog.Show("Warning", "Please select other family path.");
+                    Tools.ShowMessageBox("Warning,Please select other family path.");
 
                     fbd.ShowDialog();
                 }
@@ -106,7 +100,7 @@ namespace RevitFamilyBrowser.Revit_Classes
 
             if (FamiliesList.Count == 0)
             {
-                TaskDialog.Show("Families not found", "Try to select other folder");
+                Tools.ShowMessageBox("Families not found,Try to select other folder");
 
                 System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
             }
@@ -131,7 +125,7 @@ namespace RevitFamilyBrowser.Revit_Classes
         {
             List<string> FamilyInstance = new List<string>();
 
-            using (var transaction = new Transaction(doc, "Family Symbol Collecting"))
+            using (var transaction = new Transaction(doc, "Family Symbol Collecting,please wait"))
             {
                 transaction.Start();
 
@@ -146,12 +140,7 @@ namespace RevitFamilyBrowser.Revit_Classes
                         family = GetFamilyFromPath(item, doc);
                     }
 
-                    if (family == null)
-                    {
-                        TaskDialog.Show("Error", item);
-
-                        continue;
-                    }
+                    if (family == null) continue;
 
                     ISet<ElementId> familySymbolId = family.GetFamilySymbolIds();
 
@@ -172,6 +161,11 @@ namespace RevitFamilyBrowser.Revit_Classes
                             System.Drawing.Size imgSize = new System.Drawing.Size(200, 200);
 
                             Bitmap image = symbol.GetPreviewImage(imgSize);
+
+                            if (image == null)
+                            {
+                                image = new Bitmap(Properties.Resources.RevitLogo, imgSize);
+                            }
 
                             BitmapEncoder encoder = new BmpBitmapEncoder();
 
@@ -195,16 +189,23 @@ namespace RevitFamilyBrowser.Revit_Classes
         private Family GetFamilyFromPath(string path, Document doc)
         {
             Family family = null;
+
             int index = path.LastIndexOf('\\') + 1;
+
             string familyName = path.Substring(index);
+
             familyName = familyName.Remove(familyName.IndexOf('.'));
 
             FilteredElementCollector elementCollector = new FilteredElementCollector(doc);
+
             elementCollector = elementCollector.OfClass(typeof(Family));
+
             foreach (Element element in elementCollector)
             {
                 if (element.Name == familyName)
+                {
                     family = element as Family;
+                }
             }
             return family;
         }
